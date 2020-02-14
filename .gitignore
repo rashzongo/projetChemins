@@ -2,8 +2,5 @@
 .vs/
 
 # Build results
-projetChemins/bin/[Dd]ebug/
-projetChemins/bin/[Dd]ebugPublic/
-projetChemins/bin/[Rr]elease/
-projetChemins/bin/[Rr]eleases/
+projetChemins/bin/
 projetChemins/[Oo]bj/
