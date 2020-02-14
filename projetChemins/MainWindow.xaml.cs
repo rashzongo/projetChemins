@@ -81,8 +81,13 @@ namespace interfaceChemins
         public MainWindow()
         {
             InitializeComponent();
-            listeVilles.ItemsSource = this.villes;
+
+            DataBase.getDataBase().createTableVille();
+            DataBase.getDataBase().createTableParams();
+            listeVilles.ItemsSource = DataBase.getDataBase().Select("SELECT * FROM Ville");
+            //listeVilles.ItemsSource = this.villes;
             this.DataContext = this;
+
         }
 
         public void AddSelectedPointToList(object sender, MouseButtonEventArgs e)
@@ -90,7 +95,7 @@ namespace interfaceChemins
             Point p = Mouse.GetPosition(canvasImageCarte);
             var newVille = new Ville("ville" + this.indexVilles++, p.X, p.Y);
             this.villes.Add(newVille);
-
+            DataBase.getDataBase().InsertVille(newVille);
             // Add Point on canvas
             this.AddPointToCanvas(newVille, p);
         }
@@ -98,10 +103,11 @@ namespace interfaceChemins
         private void delete_SelectedVille(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             Ville laville = listeVilles.SelectedItem as Ville;
-            Console.WriteLine(laville);
+            Console.WriteLine("La ville à Supprimer "+ laville);
             if (laville != null)
             {
                 this.RemovePointFromCanvas(laville);
+                DataBase.getDataBase().Delete(laville);
             }
             this.villes.Remove(laville);
         }
@@ -134,13 +140,28 @@ namespace interfaceChemins
         private void runAlgo(object sender, RoutedEventArgs e)
         {
             Console.WriteLine("Running --------------------------");
+
+            //Insertion des Params  
+            Params NbXovers = new Params("NbXovers", this.NbXovers);
+            DataBase.getDataBase().InsertParams(NbXovers);
+            Params NbMutations = new Params("NbMutations", this.NbMutations);
+            DataBase.getDataBase().InsertParams(NbMutations);
+            Params NbElites = new Params("NbXovers", this.NbElites);
+            DataBase.getDataBase().InsertParams(NbElites);
+            Params NbCheminsPerGeneration = new Params("NbCheminsPerGeneration", this.NbCheminsPerGeneration);
+            DataBase.getDataBase().InsertParams(NbCheminsPerGeneration);
+
             var generations = Algo.Launch(new List<Ville>(this.villes), this.NbCheminsPerGeneration, this.NbMutations, this.NbXovers, this.NbElites);
+
+
             int i = 0;
             foreach (Generation g in generations)
             {
                 Console.WriteLine("Generation " + i++ + " : **************************************");
                 Console.WriteLine(g);
             }
+
+
         }
     }
 }
