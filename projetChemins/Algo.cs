@@ -6,6 +6,7 @@ namespace projetChemins
 {
     static class Algo
     {
+        public static Random random = new Random();
         public static List<Generation> Launch(List<Ville> listeVilles, int populationNumber,
             int mutationsPercentage, int xoverPercentage, int elitesPercentage)
         {
@@ -29,7 +30,8 @@ namespace projetChemins
         public static Generation GetNextGeneration(Generation genN,
             int mutationsPercentage, int xoverPercentage, int elitesPercentage)
         {
-            var xovers = Algo.GenerateXOver(genN, xoverPercentage, 3);
+            // CrossOver avec pivotPosition la moitié du nombre de villes
+            var xovers = Algo.GenerateXOver(genN, xoverPercentage, genN.listeChemins[0].listeVilles.Count/2);
             var mutations = Algo.GenerateMutations(genN, mutationsPercentage);
             var elites = genN.GetMeilleurChemins(elitesPercentage);
 
@@ -65,13 +67,13 @@ namespace projetChemins
                 // Console.WriteLine("result size : " + result.Count);
 
                 //Choisir deux chemins randoms
-                int rnd1 = new Random().Next(gen.listeChemins.Count);
-                int rnd2 = new Random().Next(gen.listeChemins.Count);
+                int rnd1 = random.Next(gen.listeChemins.Count);
+                int rnd2 = random.Next(gen.listeChemins.Count);
 
                 // Test pour être sûr d'avoir des randoms diff
                 while(rnd2 == rnd1)
                 {
-                    rnd2 = new Random().Next(gen.listeChemins.Count);
+                    rnd2 = random.Next(gen.listeChemins.Count);
                 }
 
                 // Generation XOvers bruts
@@ -101,8 +103,7 @@ namespace projetChemins
                     newListVilles[newListVilles.LastIndexOf(doublons[i])] = remaining[i];
                 }
                 var newChemin = new Chemin(newListVilles);
-                Console.WriteLine(newChemin);
-                if(!result.Contains(newChemin) && !gen.listeChemins.Contains(newChemin))
+                if(!result.Contains(newChemin))
                 {
                     result.Add(newChemin);
                 }
@@ -114,15 +115,15 @@ namespace projetChemins
             List<Chemin> result = new List<Chemin>();
             while (result.Count < mutationsNumber)
             {
-                int rndCheminIndex = new Random().Next(gen.listeChemins.Count);
+                int rndCheminIndex = random.Next(gen.listeChemins.Count);
 
                 //Choisir deux chemins randoms
-                int rnd1 = new Random().Next(gen.listeChemins[rndCheminIndex].listeVilles.Count);
-                int rnd2 = new Random().Next(gen.listeChemins[rndCheminIndex].listeVilles.Count);
+                int rnd1 = random.Next(gen.listeChemins[rndCheminIndex].listeVilles.Count);
+                int rnd2 = random.Next(gen.listeChemins[rndCheminIndex].listeVilles.Count);
                 // Test pour être sûr d'avoir des randoms diff
                 while (rnd2 == rnd1)
                 {
-                    rnd2 = new Random().Next(gen.listeChemins[rndCheminIndex].listeVilles.Count);
+                    rnd2 = random.Next(gen.listeChemins[rndCheminIndex].listeVilles.Count);
                 }
                 // faire une mutation
                 List<Ville> newListVilles = new List<Ville>(gen.listeChemins[rndCheminIndex].listeVilles);
@@ -134,7 +135,7 @@ namespace projetChemins
                 newListVilles[rnd2] = tmp;
 
                 var newChemin = new Chemin(newListVilles);
-                if (!result.Contains(newChemin) && !gen.listeChemins.Contains(newChemin))
+                if (!result.Contains(newChemin))
                 {
                     result.Add(newChemin);
                 }

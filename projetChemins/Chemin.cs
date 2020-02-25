@@ -79,16 +79,16 @@ namespace projetChemins
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append("[");
+            sb.Append("[ ");
             foreach (Ville v in this.listeVilles)
             {
                 sb.Append(v.NomVille);
                 if(!v.Equals(this.listeVilles[this.listeVilles.Count - 1]))
                 {
-                    sb.Append(" - ");
+                    sb.Append(" -> ");
                 }
             }
-            sb.Append("]");
+            sb.Append(" ] : " + this.CalculScore());
             return sb.ToString();
         }
 

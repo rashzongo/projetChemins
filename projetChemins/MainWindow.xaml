@@ -55,6 +55,10 @@
                         <ScrollViewer></ScrollViewer>
                     </StackPanel>
                     <ScrollViewer Grid.Column="1">
+                        <TextBlock Name="affichageConsole"
+                                   Background="Black"
+                                   Foreground="White">
+                        </TextBlock>
                     </ScrollViewer>
                 </Grid>
             </TabItem>

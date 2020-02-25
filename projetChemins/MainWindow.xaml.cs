@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Text;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -15,6 +17,7 @@ namespace interfaceChemins
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
+        public delegate void MyDelegate(string text);
         private ObservableCollection<Ville> villes = new ObservableCollection<Ville>();
         private Dictionary<Ville, Ellipse> pointsCarte = new Dictionary<Ville, Ellipse>();
         private int indexVilles;
@@ -22,6 +25,8 @@ namespace interfaceChemins
         private int mutations = 10;
         private int xovers = 2;
         private int elites = 3;
+
+        //public UpdateConsoleDelegate updateConsoleDelegate;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -75,9 +80,9 @@ namespace interfaceChemins
                     this.elites = value;
                     this.NotifyPropertyChanged("NbElites");
                 }
-
             }
         }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -92,27 +97,26 @@ namespace interfaceChemins
             this.villes.Add(newVille);
 
             // Add Point on canvas
-            this.AddPointToCanvas(newVille, p);
+            this.AddPointToCanvas(newVille);
         }
 
         private void delete_SelectedVille(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            Ville laville = listeVilles.SelectedItem as Ville;
-            Console.WriteLine(laville);
-            if (laville != null)
+            Ville selectedVille = listeVilles.SelectedItem as Ville;
+            if (selectedVille != null)
             {
-                this.RemovePointFromCanvas(laville);
+                this.RemovePointFromCanvas(selectedVille);
             }
-            this.villes.Remove(laville);
+            this.villes.Remove(selectedVille);
         }
 
-        private void AddPointToCanvas(Ville v, Point p)
+        private void AddPointToCanvas(Ville v)
         {
             Ellipse el = new Ellipse();
             el.Width = 5;
             el.Height = 5;
             el.Fill = Brushes.Red;
-            Thickness t = new Thickness(p.X, p.Y, 0, 0);
+            Thickness t = new Thickness((v.XVille - 2.5), (v.YVille - 2.5), 0, 0);
             el.Margin = t;
             this.pointsCarte.Add(v, el);
             canvasImageCarte.Children.Add(el);
@@ -133,14 +137,54 @@ namespace interfaceChemins
 
         private void runAlgo(object sender, RoutedEventArgs e)
         {
-            Console.WriteLine("Running --------------------------");
-            var generations = Algo.Launch(new List<Ville>(this.villes), this.NbCheminsPerGeneration, this.NbMutations, this.NbXovers, this.NbElites);
+            Thread algoThread = new Thread(this.exexAlgo);
+            algoThread.Start();
+        }
+
+        private void exexAlgo()
+        {
+            Console.WriteLine("Running Algo --------------------------");
+            var generations = Algo.Launch(new List<Ville>(this.villes), 
+                this.NbCheminsPerGeneration, this.NbMutations, this.NbXovers, this.NbElites);
+
+            Console.WriteLine("End Algo --------------------------");
+
             int i = 0;
+            StringBuilder sb = new StringBuilder();
             foreach (Generation g in generations)
             {
-                Console.WriteLine("Generation " + i++ + " : **************************************");
-                Console.WriteLine(g);
+                sb.Append("Generation " + i++ + " : **************************************");
+                sb.Append("\n");
+                sb.Append(g);
+                sb.Append("\n");
             }
+            Dispatcher.Invoke(() =>
+            {
+                UpdateSortieConsole(sb);
+                PrintChemin(generations[generations.Count - 1].listeChemins[0]);
+            });
+        }
+        
+        
+        private void PrintChemin(Chemin chemin) {
+            for(int i = 0; i < chemin.listeVilles.Count - 1; i++)
+            {
+                Line line = new Line();
+                line.Stroke = SystemColors.WindowFrameBrush;
+                line.X1 = chemin.listeVilles[i].XVille;
+                line.Y1 = chemin.listeVilles[i].YVille;
+                line.X2 = chemin.listeVilles[i+1].XVille;
+                line.Y2 = chemin.listeVilles[i+1].YVille;
+                canvasImageCarte.Children.Add(line);
+            }
+        }
+
+        public delegate void monDelegate(StringBuilder sb);
+
+
+        private void UpdateSortieConsole(StringBuilder sb)
+        {
+            affichageConsole.Text = sb.ToString();
         }
     }
 }
