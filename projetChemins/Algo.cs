@@ -2,36 +2,50 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace projetChemins
+namespace algoDarwin
 {
-    static class Algo
+    public static class Algo
     {
         public static Random random = new Random();
         public static List<Generation> Launch(List<Ville> listeVilles, int populationNumber,
             int mutationsPercentage, int xoverPercentage, int elitesPercentage)
         {
-            // TODO : tester les params fournis
             List<Generation> generations = new List<Generation>();
-            generations.Add(new Generation(GenerateRandomChemins(listeVilles, populationNumber)));
+            var fisrstGen = new Generation(GenerateRandomChemins(listeVilles, populationNumber));
+            generations.Add(fisrstGen);
 
-            while (checkStopCondition(new List<Generation>(generations)))
+            while (!checkStopCondition(new List<Generation>(generations)))
             {
                 generations.Add(GetNextGeneration(generations.Last(), mutationsPercentage, xoverPercentage, elitesPercentage));
             }
             return generations;
         }
 
-        public static bool checkStopCondition(List<Generation> generations)
+        // Condition d'arrêt lorsque le meilleur score revient autant de fois qu'il y a de chemins par generation
+        private static bool checkStopCondition(List<Generation> generations)
         {
-            return generations.Count >= 30 ? false : true;
-            //STOP if meilleur score revient plus de 2* nb de ville
+            if(generations.Count > generations[0].listeChemins.Count)
+            {
+                for(int i = generations.Count - 1; i > generations.Count - generations[0].listeChemins.Count; i--)
+                {
+                    if(generations[i].GetMeilleurScore() != generations.Last().GetMeilleurScore())
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
-        public static Generation GetNextGeneration(Generation genN,
+        private static Generation GetNextGeneration(Generation genN,
             int mutationsPercentage, int xoverPercentage, int elitesPercentage)
         {
             // CrossOver avec pivotPosition la moitié du nombre de villes
-            var xovers = Algo.GenerateXOver(genN, xoverPercentage, genN.listeChemins[0].listeVilles.Count/2);
+            var xovers = Algo.GenerateXOver(genN, xoverPercentage);
             var mutations = Algo.GenerateMutations(genN, mutationsPercentage);
             var elites = genN.GetMeilleurChemins(elitesPercentage);
 
@@ -39,12 +53,26 @@ namespace projetChemins
             genPrimeChemins.AddRange(elites);
             genPrimeChemins.AddRange(xovers);
 
-            var genPrime = new Generation(genPrimeChemins).GetMeilleurChemins(10);
+            var genPrime = new Generation(genPrimeChemins).GetMeilleurChemins(genN.listeChemins.Count);
             return new Generation(genPrime);
         }
 
+        private static int ChoixDebutPivot(Chemin c1, Chemin c2)
+        {
+            int pivot = 1;
+            for(int i = 0; i < c1.listeVilles.Count - 1; i++)
+            {
+                if(c1.listeVilles[i] != c2.listeVilles[i])
+                {
+                    pivot = i;
+                    break;
+                }
+            }
+            return pivot;
+        }
 
-        public static List<Chemin> GenerateRandomChemins(List<Ville> villes, int cheminsNumber)
+
+        private static List<Chemin> GenerateRandomChemins(List<Ville> villes, int cheminsNumber)
         {
             List<Chemin> result = new List<Chemin>();
             while (result.Count < cheminsNumber)
@@ -58,31 +86,32 @@ namespace projetChemins
             return result;
         }
 
-        public static List<Chemin> GenerateXOver(Generation gen, int XOversNumber, int pivotPosition)
+        private static List<Chemin> GenerateXOver(Generation gen, int XOversNumber)
         {
             //TODO : test number de Xover possible ???
             List<Chemin> result = new List<Chemin>();
             while(result.Count < XOversNumber)
             {
-                // Console.WriteLine("result size : " + result.Count);
-
                 //Choisir deux chemins randoms
                 int rnd1 = random.Next(gen.listeChemins.Count);
                 int rnd2 = random.Next(gen.listeChemins.Count);
-
                 // Test pour être sûr d'avoir des randoms diff
-                while(rnd2 == rnd1)
+                while (rnd2 == rnd1)
                 {
                     rnd2 = random.Next(gen.listeChemins.Count);
                 }
 
+                // Choix de pivot aléatoire optimal
+                int pivotStart = ChoixDebutPivot(gen.listeChemins[rnd1], gen.listeChemins[rnd2]);
+                int pivotPosition = random.Next(pivotStart, gen.listeChemins[0].listeVilles.Count);
+
                 // Generation XOvers bruts
                 List<Ville> newListVilles = new List<Ville>();
-                for(int i = 0; i < pivotPosition; i++)
+                for(int i = 0; i <= pivotPosition; i++)
                 {
                     newListVilles.Add(gen.listeChemins[rnd1].listeVilles[i]);
                 }
-                for (int i = pivotPosition; i < gen.listeChemins[0].listeVilles.Count; i++)
+                for (int i = pivotPosition+1; i < gen.listeChemins[0].listeVilles.Count; i++)
                 {
                     newListVilles.Add(gen.listeChemins[rnd2].listeVilles[i]);
                 }
@@ -103,14 +132,13 @@ namespace projetChemins
                     newListVilles[newListVilles.LastIndexOf(doublons[i])] = remaining[i];
                 }
                 var newChemin = new Chemin(newListVilles);
-                if(!result.Contains(newChemin))
-                {
-                    result.Add(newChemin);
-                }
+                
+                result.Add(newChemin);
             }
             return result;
         }
-        public static List<Chemin> GenerateMutations(Generation gen, int mutationsNumber)
+
+        private static List<Chemin> GenerateMutations(Generation gen, int mutationsNumber)
         {
             List<Chemin> result = new List<Chemin>();
             while (result.Count < mutationsNumber)

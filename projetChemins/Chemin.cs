@@ -4,9 +4,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 
-namespace projetChemins
+namespace algoDarwin
 {
-    class Chemin: IComparable<Chemin>
+    public class Chemin: IComparable<Chemin>
     {
         private List<Ville> villes;
 
@@ -76,6 +76,7 @@ namespace projetChemins
                 return true;
             }
         }
+
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();

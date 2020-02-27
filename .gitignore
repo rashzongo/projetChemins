@@ -3,5 +3,8 @@
 
 # Build results
 projetChemins/bin/
+projetChemins/[Bb]in/
 projetChemins/[Oo]bj/
 
+
+packages/

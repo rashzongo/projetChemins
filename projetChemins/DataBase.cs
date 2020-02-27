@@ -1,11 +1,10 @@
-﻿using interfaceChemins;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace projetChemins
+namespace algoDarwin
 {
     class DataBase
     {
@@ -64,7 +63,7 @@ namespace projetChemins
             Console.WriteLine("begin Insert Params");
             SQLite.SQLiteConnection connection = new SQLite.SQLiteConnection(_dbPath);
             connection.CreateTable<Params>();
-            connection.Insert(p);
+            connection.InsertOrReplace(p);
             Console.WriteLine("end Insert Params");
 
         }
@@ -101,11 +100,10 @@ namespace projetChemins
 
         public void Update_Params(Params p)
         {
-            Console.WriteLine("begin Delete param");
+            Console.WriteLine("begin Update param");
             SQLite.SQLiteConnection connection = new SQLite.SQLiteConnection(_dbPath);
-            connection.Update(p);
-            Console.WriteLine("end Delete param");
-
+            connection.InsertOrReplace(p);
+            Console.WriteLine("end Update param");
         }
     }
 }

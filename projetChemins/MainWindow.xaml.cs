@@ -1,5 +1,4 @@
-﻿using projetChemins;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -9,8 +8,9 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using algoDarwin;
 
-namespace interfaceChemins
+namespace projetChemins
 {
     /// <summary>
     /// Logique d'interaction pour MainWindow.xaml
@@ -22,9 +22,14 @@ namespace interfaceChemins
         private Dictionary<Ville, Ellipse> pointsCarte = new Dictionary<Ville, Ellipse>();
         private int indexVilles;
         private int cheminsPerGeneration = 10;
-        private int mutations = 10;
-        private int xovers = 2;
-        private int elites = 3;
+        private int mutations = 30;
+        private int xovers = 30;
+        private int elites = 2;
+        private const string XOVERS_PARAMS_KEY = "NbXovers";
+        private const string ELITES_PARAMS_KEY = "NbElites";
+        private const string MUTATIONS_PARAMS_KEY = "NbMutations";
+        private const string GENERATION_PARAMS_KEY = "NbCheminsPerGeneration";
+        private List<Line> cheminLines = new List<Line>();
 
         //public UpdateConsoleDelegate updateConsoleDelegate;
 
@@ -89,20 +94,48 @@ namespace interfaceChemins
 
             DataBase.getDataBase().createTableVille();
             DataBase.getDataBase().createTableParams();
-            listeVilles.ItemsSource = DataBase.getDataBase().Select("SELECT * FROM Ville");
-            //listeVilles.ItemsSource = this.villes;
+            var parameters = DataBase.getDataBase().Select_Params("SELECT * FROM Params");
+            updateParameters(parameters);
+            var villesEnBase = DataBase.getDataBase().Select("SELECT * FROM Ville");
+            listeVilles.ItemsSource = this.villes;
             this.DataContext = this;
+            InitCanvas(villesEnBase);
+        }
 
+        private void updateParameters(List<Params> parameters)
+        {
+            foreach(Params p in parameters)
+            {
+                if(p.Key == ELITES_PARAMS_KEY)
+                {
+                    this.NbElites = p.Value;
+                }
+                if (p.Key == XOVERS_PARAMS_KEY)
+                {
+                    this.NbXovers = p.Value;
+                }
+                if (p.Key == MUTATIONS_PARAMS_KEY)
+                {
+                    this.NbMutations = p.Value;
+                }
+                if (p.Key == GENERATION_PARAMS_KEY)
+                {
+                    this.NbCheminsPerGeneration = p.Value;
+                }
+                if (p.Key == "indexVilles")
+                {
+                    this.indexVilles = p.Value;
+                }
+            }
         }
 
         public void AddSelectedPointToList(object sender, MouseButtonEventArgs e)
         {
             Point p = Mouse.GetPosition(canvasImageCarte);
             var newVille = new Ville("ville" + this.indexVilles++, p.X, p.Y);
-            this.villes.Add(newVille);
             DataBase.getDataBase().InsertVille(newVille);
             // Add Point on canvas
-            this.AddPointToCanvas(newVille);
+            this.AddVille(newVille);
         }
 
         private void delete_SelectedVille(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -116,8 +149,17 @@ namespace interfaceChemins
             this.villes.Remove(selectedVille);
         }
 
-        private void AddPointToCanvas(Ville v)
+        private void InitCanvas(List<Ville> villesEnBase)
         {
+            Console.WriteLine("Initing canvas");
+            foreach(Ville v in villesEnBase)
+            {
+                AddVille(v);
+            }
+        }
+        private void AddVille(Ville v)
+        {
+            this.villes.Add(v);
             Ellipse el = new Ellipse();
             el.Width = 5;
             el.Height = 5;
@@ -147,17 +189,34 @@ namespace interfaceChemins
             algoThread.Start();
         }
 
-        private void exexAlgo()
+        private void saveParams()
         {
             //Insertion des Params  
-            Params NbXovers = new Params("NbXovers", this.NbXovers);
+            Params NbXovers = new Params(XOVERS_PARAMS_KEY, this.NbXovers);
             DataBase.getDataBase().InsertParams(NbXovers);
-            Params NbMutations = new Params("NbMutations", this.NbMutations);
+            Params NbMutations = new Params(MUTATIONS_PARAMS_KEY, this.NbMutations);
             DataBase.getDataBase().InsertParams(NbMutations);
-            Params NbElites = new Params("NbXovers", this.NbElites);
-            DataBase.getDataBase().InsertParams(NbElites);
-            Params NbCheminsPerGeneration = new Params("NbCheminsPerGeneration", this.NbCheminsPerGeneration);
+            Params NbElites = new Params(ELITES_PARAMS_KEY, this.NbElites);
+            DataBase.getDataBase().Update_Params(NbElites);
+            Params NbCheminsPerGeneration = new Params(GENERATION_PARAMS_KEY, this.NbCheminsPerGeneration);
             DataBase.getDataBase().InsertParams(NbCheminsPerGeneration);
+            Params indexVilles = new Params("indexVilles", this.indexVilles);
+            DataBase.getDataBase().InsertParams(indexVilles);
+        }
+
+        private void exexAlgo()
+        {
+            // Supprimer le chemin dessiné
+            Dispatcher.Invoke(() =>
+            {
+                foreach (Line l in cheminLines)
+                {
+                    canvasImageCarte.Children.Remove(l);
+                }
+                cheminLines.RemoveRange(0, cheminLines.Count);
+            });
+
+            this.saveParams();
             Console.WriteLine("Running Algo --------------------------");
             var generations = Algo.Launch(new List<Ville>(this.villes),
                 this.NbCheminsPerGeneration, this.NbMutations, this.NbXovers, this.NbElites);
@@ -176,10 +235,10 @@ namespace interfaceChemins
             Dispatcher.Invoke(() =>
             {
                 UpdateSortieConsole(sb);
+                //Affichage meilleur chemin
                 PrintChemin(generations[generations.Count - 1].listeChemins[0]);
             });
         }
-
 
         private void PrintChemin(Chemin chemin)
         {
@@ -191,6 +250,7 @@ namespace interfaceChemins
                 line.Y1 = chemin.listeVilles[i].YVille;
                 line.X2 = chemin.listeVilles[i + 1].XVille;
                 line.Y2 = chemin.listeVilles[i + 1].YVille;
+                cheminLines.Add(line);
                 canvasImageCarte.Children.Add(line);
             }
         }

@@ -2,9 +2,9 @@
 using System.Linq;
 using System.Text;
 
-namespace projetChemins
+namespace algoDarwin
 {
-    class Generation
+    public class Generation
     {
         private List<Chemin> chemins;
 
@@ -28,7 +28,7 @@ namespace projetChemins
         public List<Chemin> GetMeilleurChemins(int numberChemins)
         {
             // Distinct pour la séléction (Xovers, mutations, elites)
-            List<Chemin> sortedList = listeChemins.Distinct().ToList();
+            List<Chemin> sortedList = listeChemins.Distinct(new CheminComparer()).ToList();
             sortedList.Sort();
             return sortedList.GetRange(0, numberChemins);
         }

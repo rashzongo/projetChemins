@@ -2,10 +2,10 @@
 using System;
 using System.Text;
 
-namespace projetChemins
+namespace algoDarwin
 {
     [Table("Ville")]
-    class Ville
+    public class Ville
     {
         [PrimaryKey, AutoIncrement]
         public int ID { get; set; }
