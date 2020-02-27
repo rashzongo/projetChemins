@@ -46,7 +46,7 @@ namespace interfaceChemins
         public int NbMutations
         {
             get { return this.mutations; }
-            set 
+            set
             {
                 if (this.mutations != value)
                 {
@@ -86,8 +86,13 @@ namespace interfaceChemins
         public MainWindow()
         {
             InitializeComponent();
-            listeVilles.ItemsSource = this.villes;
+
+            DataBase.getDataBase().createTableVille();
+            DataBase.getDataBase().createTableParams();
+            listeVilles.ItemsSource = DataBase.getDataBase().Select("SELECT * FROM Ville");
+            //listeVilles.ItemsSource = this.villes;
             this.DataContext = this;
+
         }
 
         public void AddSelectedPointToList(object sender, MouseButtonEventArgs e)
@@ -95,7 +100,7 @@ namespace interfaceChemins
             Point p = Mouse.GetPosition(canvasImageCarte);
             var newVille = new Ville("ville" + this.indexVilles++, p.X, p.Y);
             this.villes.Add(newVille);
-
+            DataBase.getDataBase().InsertVille(newVille);
             // Add Point on canvas
             this.AddPointToCanvas(newVille);
         }
@@ -106,6 +111,7 @@ namespace interfaceChemins
             if (selectedVille != null)
             {
                 this.RemovePointFromCanvas(selectedVille);
+                DataBase.getDataBase().Delete(selectedVille);
             }
             this.villes.Remove(selectedVille);
         }
@@ -143,8 +149,17 @@ namespace interfaceChemins
 
         private void exexAlgo()
         {
+            //Insertion des Params  
+            Params NbXovers = new Params("NbXovers", this.NbXovers);
+            DataBase.getDataBase().InsertParams(NbXovers);
+            Params NbMutations = new Params("NbMutations", this.NbMutations);
+            DataBase.getDataBase().InsertParams(NbMutations);
+            Params NbElites = new Params("NbXovers", this.NbElites);
+            DataBase.getDataBase().InsertParams(NbElites);
+            Params NbCheminsPerGeneration = new Params("NbCheminsPerGeneration", this.NbCheminsPerGeneration);
+            DataBase.getDataBase().InsertParams(NbCheminsPerGeneration);
             Console.WriteLine("Running Algo --------------------------");
-            var generations = Algo.Launch(new List<Ville>(this.villes), 
+            var generations = Algo.Launch(new List<Ville>(this.villes),
                 this.NbCheminsPerGeneration, this.NbMutations, this.NbXovers, this.NbElites);
 
             Console.WriteLine("End Algo --------------------------");
@@ -164,17 +179,18 @@ namespace interfaceChemins
                 PrintChemin(generations[generations.Count - 1].listeChemins[0]);
             });
         }
-        
-        
-        private void PrintChemin(Chemin chemin) {
-            for(int i = 0; i < chemin.listeVilles.Count - 1; i++)
+
+
+        private void PrintChemin(Chemin chemin)
+        {
+            for (int i = 0; i < chemin.listeVilles.Count - 1; i++)
             {
                 Line line = new Line();
                 line.Stroke = SystemColors.WindowFrameBrush;
                 line.X1 = chemin.listeVilles[i].XVille;
                 line.Y1 = chemin.listeVilles[i].YVille;
-                line.X2 = chemin.listeVilles[i+1].XVille;
-                line.Y2 = chemin.listeVilles[i+1].YVille;
+                line.X2 = chemin.listeVilles[i + 1].XVille;
+                line.Y2 = chemin.listeVilles[i + 1].YVille;
                 canvasImageCarte.Children.Add(line);
             }
         }

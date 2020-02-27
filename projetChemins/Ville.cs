@@ -1,19 +1,33 @@
-﻿using System;
+﻿using SQLite;
+using System;
 using System.Text;
 
 namespace projetChemins
 {
+    [Table("Ville")]
     class Ville
     {
-        private string nom;
-        private double x;
-        private double y;
+        [PrimaryKey, AutoIncrement]
+        public int ID { get; set; }
+
+        [Column("nom")]
+        private string nom { get; set; }
+
+        [Column("x")]
+        private double x { get; set; }
+
+        [Column("y")]
+        private double y { get; set; }
 
         public Ville(string nom, double x, double y)
         {
             this.nom = nom;
             this.x = x;
             this.y = y;
+        }
+        public Ville()
+        {
+           
         }
 
         public string NomVille
@@ -50,7 +64,7 @@ namespace projetChemins
             {
                 Ville ville = (Ville)obj;
 
-                return (this.NomVille.Equals(ville.NomVille) &&
+                return (this.ID.Equals(ville.ID) && this.NomVille.Equals(ville.NomVille) &&
                     this.XVille == ville.XVille && this.YVille == ville.YVille);
             }
         }
@@ -59,6 +73,7 @@ namespace projetChemins
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("{");
+            sb.Append(" ID : " + this.ID + ", ");
             sb.Append(" Nom : " + this.NomVille + ", ");
             sb.Append(" X : " + this.XVille + ", ");
             sb.Append(" Y : " + this.YVille);
